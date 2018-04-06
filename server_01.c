@@ -6,22 +6,20 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-# include <unistd.h>
+#include <unistd.h>
 
 struct sockaddr_in server;
 struct sockaddr_in client;
 socklen_t size = sizeof(client);
 
 int main(int argc, char	 *argv[]){
-
-
 	int len = atoi(argv[1]); //tamanho Buffer
 	int port = atoi(argv[2]); // porta socket
 
 	//Sockets cliente-servidor
 	int socket_server;
-	int socket_client
-;	
+	int socket_client;
+
 	//Buffer de recepção do servidor, com tamanho len
 	char buffer[len]; //Buffer de recepção do servidor, com tamanho len
 	char name[len]; // Variável auxiliar, nome do arquivo buscado, tamanho len
@@ -72,6 +70,7 @@ int main(int argc, char	 *argv[]){
 	int size_string;
 	printf("abre o arquivo\n");
 	size_string = fread(out_data, sizeof(char), len, f);
+	
 	while(size_string>0){
 		printf("entra no while\n");
 		send(socket_client, out_data, size_string, 0);
