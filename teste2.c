@@ -51,7 +51,7 @@ int main(int argc, chat **argv){
 
 	listen(socket_server, 1); 
 
-	socket_client = accept(socket_server, (struct sockaddr*)&client, &client);
+	socket_client = accept(socket_server, (struct sockaddr*)&client, &size);
 
 	if(socket_client == -1){
 		printf("Erro np accept\n");
