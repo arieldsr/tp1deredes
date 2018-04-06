@@ -12,10 +12,10 @@ struct sockaddr_in server;
 struct sockaddr_in client;
 socklen_t size = sizeof(client);
 
-int main(int argc, char	 **argv){
+int main(int argc, char	 *argv[]){
 
 
-	int len = atoi(argv[1]); //tamanho buffer
+	int len = atoi(argv[1]); //tamanho Buffer
 	int port = atoi(argv[2]); // porta socket
 
 	//Sockets cliente-servidor
@@ -24,11 +24,11 @@ int main(int argc, char	 **argv){
 ;	
 	//Buffer de recepção do servidor, com tamanho len
 	char buffer[len]; //Buffer de recepção do servidor, com tamanho len
-	char name[30]; // Variável auxiliar, nome do arquivo buscado, tamanho arbitrário
-	char *out_data = (char*)malloc(len*sizeof(char));//Variável auxiliar de envio de dados do arquivo ao cliente
+	char name[len]; // Variável auxiliar, nome do arquivo buscado, tamanho len
+	char *out_data = malloc((len*sizeof(char))+1);//Variável auxiliar de envio de dados do arquivo ao cliente
 	
 	memset(buffer, 0x0, len); // limpa o buffer de qualquer lixo
-	memset(name, 0x0, 30);//Limpa a variável do nome
+	memset(name, 0x0, len);//Limpa a variável do nome
 	memset(out_data, 0x0, len);//limpa a variável de saída
 	//As limpezas são necessárias porque o valor recebido pode ser menor que o tamanho das variáveis, guardando lixo
 
@@ -58,18 +58,24 @@ int main(int argc, char	 **argv){
 		printf("Erro np accept\n");
 	}
 	printf("teste3: fez o accept\n");
+	char show_connection[25];
+	strcpy(show_connection,"conectado ao servidor\n\0");
 	
-	
-	int aux2 = recv(socket_client, name, 30, 0);
+	send(socket_client, show_connection, 25, 0);
+
+	int aux2 = recv(socket_client, name, len, 0);
 	while(aux2<0); // espera até uma mensagem ser enviada
 	
-	printf("teste4 - Nome do arquivo: %s/n", name);
+	printf("teste4 - Nome do arquivo: %s\n", name);
 		
 	FILE *f = fopen((const char*)name, "r"); // abre o arquivo especificado para leitura
 	int size_string;
-	
-	while(size_string = fread(out_data, sizeof(char), len, f) ){
+	printf("abre o arquivo\n");
+	size_string = fread(out_data, sizeof(char), len, f);
+	while(size_string>0){
+		printf("entra no while\n");
 		send(socket_client, out_data, size_string, 0);
+		printf("envia o arquivo\n");
 		memset(out_data,0x0,0);//limpa a variável de saída a cada iteração
 	}
 	printf("teste5: arquivo enviado ao cliente");
