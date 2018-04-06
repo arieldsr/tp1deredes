@@ -2,87 +2,119 @@
 #include <stdlib.h>
 #include <string.h>
 
-//inclusões específicas para o tp
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <sys/time.h>
 #include <unistd.h>
 
-struct sockaddr_in server;
-struct sockaddr_in client;
-socklen_t size = sizeof(client);
+#define N 50 //Tamanho do nome do arquivo
+
+struct sockaddr_in servidor;
+struct sockaddr_in cliente;
+struct timeval tempo_inicio, tempo_final;
+socklen_t size = sizeof(cliente);
 
 int main(int argc, char	 *argv[]){
-	int len = atoi(argv[1]); //tamanho Buffer
-	int port = atoi(argv[2]); // porta socket
-
-	//Sockets cliente-servidor
-	int socket_server;
-	int socket_client;
-
-	//Buffer de recepção do servidor, com tamanho len
-	char buffer[len]; //Buffer de recepção do servidor, com tamanho len
-	char name[len]; // Variável auxiliar, nome do arquivo buscado, tamanho len
-	char *out_data = malloc((len*sizeof(char))+1);//Variável auxiliar de envio de dados do arquivo ao cliente
+	//Início contagem de tempo
+	gettimeofday(&tempo_inicio, NULL);
 	
-	memset(buffer, 0x0, len); // limpa o buffer de qualquer lixo
-	memset(name, 0x0, len);//Limpa a variável do nome
-	memset(out_data, 0x0, len);//limpa a variável de saída
-	//As limpezas são necessárias porque o valor recebido pode ser menor que o tamanho das variáveis, guardando lixo
+	int porta_servidor = atoi(argv[1]);
+	int tamanho_buffer = atoi(argv[2]);
 
-	socket_server = socket(AF_INET, SOCK_STREAM, 0);
+	int socket_servidor;
+	int socket_cliente;
 
-	if(socket_server == -1){
-		printf("Erro na criação do socket");
+	char nome_arquivo_enviado[N];
+	char *buffer = malloc(tamanho_buffer);
+	
+	//Limpeza das variáveis
+	memset(&nome_arquivo_enviado, 0, N);
+	memset(buffer, 0, tamanho_buffer);
+
+	socket_servidor = socket(AF_INET, SOCK_STREAM, 0);
+
+	if(socket_servidor == -1){
+		printf("Erro na criação do socket.");
+		return 0;
 	}
-	printf("teste1: criou o socket\n");
-	
-		server.sin_family= AF_INET;
-		server.sin_port = htons(port);	
-		memset(server.sin_zero, 0x0, 8);
 
-	int aux1 = bind(socket_server, (struct sockaddr*)&server, sizeof(server)); 
+	printf("Teste 1: Criou o socket.\n");
 
-	if( aux1 == -1){
-		printf("Erro no bind\n");
+	servidor.sin_family = AF_INET;
+	servidor.sin_port = htons(porta_servidor);	
+	memset(servidor.sin_zero, 0, 8);
+
+	int erro_bind = bind(socket_servidor, (struct sockaddr*) &servidor, sizeof(servidor)); 
+
+	if (erro_bind == -1){
+		printf("Erro no bind.\n");
+		return 0;
 	}
-	printf("teste2:fez o bind\n");
 
-	listen(socket_server, 1); 
+	printf("Teste 2: Fez o bind.\n");
 
-	socket_client = accept(socket_server, (struct sockaddr*)&client, &size);
+	listen(socket_servidor, 1); //O segundo parâmetro diz quantas conexões são aceitas
 
-	if(socket_client == -1){
-		printf("Erro np accept\n");
+	socket_cliente = accept(socket_servidor, (struct sockaddr*) &cliente, &size);
+
+	if(socket_cliente == -1){
+		printf("Erro no accept.\n");
+		return 0;
 	}
-	printf("teste3: fez o accept\n");
-	char show_connection[25];
-	strcpy(show_connection,"conectado ao servidor\n\0");
-	
-	send(socket_client, show_connection, 25, 0);
 
-	int aux2 = recv(socket_client, name, len, 0);
-	while(aux2<0); // espera até uma mensagem ser enviada
+	printf("Teste 3: Fez o accept.\n");
 	
-	printf("teste4 - Nome do arquivo: %s\n", name);
+	char mensagem_enviada[25];
+	strcpy(mensagem_enviada, "Conectado ao servidor. Insira o nome do arquivo:\0");
+	
+	if (send(socket_cliente, mensagem_enviada, strlen(mensagem_enviada), 0))
+		printf("Aguardando resposta do cliente.\n");
+	else{
+		printf("Erro ao enviar mensagem de sucesso ao cliente.\n");
+	}
+	
+	int resposta_foi_recebida;
+	do{
+		resposta_foi_recebida = recv(socket_cliente, nome_arquivo_enviado, porta_servidor, 0);
+	}while(resposta_foi_recebida < 0);
+
+	strtok(nome_arquivo_enviado, "\n"); //Retorna apenas o pedaço da string anterior ao '\n'.
+
+	printf("Teste 4: O nome do arquivo é %s.\n", nome_arquivo_enviado);
 		
-	FILE *f = fopen((const char*)name, "r"); // abre o arquivo especificado para leitura
-	int size_string;
-	printf("abre o arquivo\n");
-	size_string = fread(out_data, sizeof(char), len, f);
+	FILE *f = fopen((const char*)nome_arquivo_enviado, "r");
 	
-	while(size_string>0){
-		printf("entra no while\n");
-		send(socket_client, out_data, size_string, 0);
-		printf("envia o arquivo\n");
-		memset(out_data,0x0,0);//limpa a variável de saída a cada iteração
+	if (f == NULL){
+		printf("Erro ao abrir o arquivo. Conexão encerrada.");
+		close(socket_cliente);
+		close(socket_servidor);
+		free(buffer);
+		return 0;
 	}
-	printf("teste5: arquivo enviado ao cliente");
+
+	int tamanho_string, bytes_enviados = 0;
+	printf("Arquivo aberto.\n");
+	tamanho_string = fread(buffer, sizeof(char), tamanho_buffer, f);
+	
+	while(tamanho_string > 0){
+		send(socket_cliente, buffer, tamanho_string, 0);
+		memset(buffer, 0, sizeof(buffer));
+		bytes_enviados += tamanho_string;
+		tamanho_string = fread(buffer, sizeof(char), tamanho_buffer, f);
+	}
+	printf("Teste 5: Arquivo enviado ao cliente.");
 		
 	fclose(f);
-	close(socket_client);
-	close(socket_server);
-	free(out_data);
+	close(socket_cliente);
+	close(socket_servidor);
+	free(buffer);
+
+	gettimeofday(&tempo_final, NULL);
+
+	int tempo_total = tempo_final.tv_sec - tempo_inicio.tv_sec;
+
+	printf("\nArquivo: %s. Bytes enviados: %i. Tempo gasto em segundos: %i.", nome_arquivo_enviado, bytes_enviados, tempo_total);	
 	
-return 0; 
+	return 1;
 }
