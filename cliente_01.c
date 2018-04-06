@@ -61,7 +61,7 @@ int main(int argc, char	 *argv[]){
 
 	while (aux2 <-1);
 
-	while(recv > 0){
+	while(aux2 > 0){
 	FILE *f = fopen((const char*)name, "w"); // abre o arquivo especificado para escrita
 
 		fwrite(buffer, sizeof(char), len, f);
