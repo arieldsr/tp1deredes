@@ -71,6 +71,7 @@ int main(int argc, chat **argv){
 		send(socket_client, out_data, size_string, 0);
 		memset(out_data,0x0,0);//limpa a variável de saída a cada iteração
 	}
+	printf("teste5: arquivo enviado ao cliente);
 		
 	fclose(f);
 	close(socket_client);
