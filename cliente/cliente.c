@@ -124,10 +124,9 @@ int main(int argc, char	 *argv[]){
 
 	int tempo_total_segundos = resultado.tv_sec;
 	int tempo_total_microsegundos = resultado.tv_usec;
-	float tempo_total = tempo_total_segundos + (float) tempo_total_microsegundos/10000000;
+	float tempo_total = (float) tempo_total_segundos + (float) tempo_total_microsegundos/10000000;
 	float vazao_kbps = (float) bytes_recebidos/(tempo_total*1000);
 
-	printf("%f\n", tempo_total);
 	printf("Buffer = %5u byte(s), %10.2f kbps (%u bytes em %3u.%06u s)\n", tamanho_buffer, vazao_kbps, bytes_recebidos, tempo_total_segundos, tempo_total_microsegundos);
 
 	return 1;

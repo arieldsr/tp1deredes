@@ -71,7 +71,7 @@ int main(int argc, char	 *argv[]){
 
 
 	//Envia ACK
-	strcpy(buffer, "Conectado ao servidor.");
+	strcpy(buffer, "OK.");
 	send(socket_cliente, buffer, strlen(buffer), 0);
 	memset(buffer, 0, sizeof(buffer));
 	
@@ -79,9 +79,8 @@ int main(int argc, char	 *argv[]){
 	//Espera ACK e nome do arquivo	
 	int tamanho_resposta_recebida;
 	do{
-		tamanho_resposta_recebida = recv(socket_cliente, nome_arquivo_enviado, tamanho_buffer, 0);
+		tamanho_resposta_recebida = recv(socket_cliente, nome_arquivo_enviado, N, 0);
 	}while(tamanho_resposta_recebida < 0);
-
 
 	//Abertura do arquivo
 	FILE *f = fopen((const char*)nome_arquivo_enviado, "r");
